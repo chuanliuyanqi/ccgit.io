@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>50种语言"我爱你"爱心环绕</title>
     <style>
         * {
@@ -13,373 +13,291 @@
         
         body {
             background: #000;
-            font-family: 'Arial', sans-serif;
             overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-        }
-        
-        .container {
-            position: relative;
-            width: 100%;
-            max-width: 800px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        
-        .title {
-            color: #ff4081;
-            font-size: 24px;
-            margin-bottom: 20px;
-            text-align: center;
-            text-shadow: 0 0 10px rgba(255, 64, 129, 0.5);
+            font-family: Arial, sans-serif;
+            touch-action: none;
         }
         
         canvas {
             display: block;
-            background: #000;
-            border-radius: 10px;
-            box-shadow: 0 0 20px rgba(255, 64, 129, 0.3);
-        }
-        
-        .controls {
-            margin-top: 20px;
-            display: flex;
-            gap: 15px;
-        }
-        
-        button {
-            padding: 10px 20px;
-            background: rgba(255, 64, 129, 0.7);
-            color: white;
-            border: none;
-            border-radius: 25px;
-            cursor: pointer;
-            font-weight: bold;
-            box-shadow: 0 0 10px rgba(255, 64, 129, 0.7);
-            transition: all 0.3s ease;
-        }
-        
-        button:hover {
-            background: rgba(255, 64, 129, 1);
-            transform: translateY(-2px);
-            box-shadow: 0 0 15px rgba(255, 64, 129, 1);
-        }
-        
-        .status {
-            margin-top: 10px;
-            color: #ff4081;
-            font-size: 14px;
-        }
-        
-        @media (max-width: 600px) {
-            .title {
-                font-size: 20px;
-            }
-            
-            canvas {
-                width: 95vw;
-                height: 70vh;
-            }
-            
-            button {
-                padding: 8px 16px;
-                font-size: 14px;
-            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1 class="title">50种语言"我爱你"爱心环绕</h1>
-        <canvas id="loveCanvas" width="600" height="500"></canvas>
-        <div class="controls">
-            <button id="toggleBtn">暂停动画</button>
-        </div>
-        <div class="status" id="status">动画运行中...</div>
-    </div>
+    <canvas id="heartCanvas"></canvas>
 
     <script>
-        class LoveHeartAnimation {
-            constructor() {
-                this.canvas = document.getElementById('loveCanvas');
-                this.ctx = this.canvas.getContext('2d');
-                this.toggleBtn = document.getElementById('toggleBtn');
-                this.status = document.getElementById('status');
-                
-                // 初始化数据
-                this.isPaused = false;
-                this.angle = 0;
-                this.animationId = null;
-                this.positions = [];
-                
-                // 语言文本
-                this.loveTexts = [
-                    "我爱你", // 中文
-                    "I love you", // 英语
-                    "Je t'aime", // 法语
-                    "Ich liebe dich", // 德语
-                    "Te amo", // 西班牙语
-                    "Ti amo", // 意大利语
-                    "愛してる", // 日语
-                    "사랑해", // 韩语
-                    "Я тебя люблю", // 俄语
-                    "Eu te amo", // 葡萄牙语
-                    "ฉันรักเธอ", // 泰语
-                    "Jeg elsker dig", // 丹麦语
-                    "Ik hou van jou", // 荷兰语
-                    "Minä rakastan sinua", // 芬兰语
-                    "Je t'aime", // 法语(加拿大)
-                    "Σ' αγαπώ", // 希腊语
-                    "Szeretlek", // 匈牙利语
-                    "Ég elska þig", // 冰岛语
-                    "Tôi yêu bạn", // 越南语
-                    "Mahal kita", // 菲律宾语
-                    "Volim te", // 克罗地亚语
-                    "Miluji tě", // 捷克语
-                    "Ani ohev otach", // 希伯来语
-                    "Kocham cię", // 波兰语
-                    "Amo-te", // 葡萄牙语(巴西)
-                    "Te iubesc", // 罗马尼亚语
-                    "Milujem te", // 斯洛文尼亚语
-                    "Amo ti", // 世界语
-                    "אני אוהבת אותך", // 希伯来语(女对男)
-                    "أنا أحبك", // 阿拉伯语
-                    "ຂ້ອຍຮັກເຈົ້າ", // 老挝语
-                    "ខ្ញុំស្រឡាញ់អ្នក", // 柬埔寨语
-                    "Я кахаю цябе", // 乌克兰语
-                    "Мən səninlə sevirəm", // 阿塞拜疆语
-                    "我爱你", // 粤语
-                    "I love thee", // 古英语
-                    "Mi amas vin", // 世界语
-                    "Ina sonko", // 斯瓦希里语
-                    "Me gustas", // 西班牙语(拉美)
-                    "Saya cintamu", // 印尼语
-                    "Nakupenda", // 斯瓦希里语
-                    "Main tumse pyar karta hoon", // 印地语(男)
-                    "Main tumse pyar karti hoon", // 印地语(女)
-                    "Sənə seviram", // 土库曼语
-                    "Aš tave myliu", // 立陶宛语
-                    "Es tevi mīlu", // 拉脱维亚语
-                    "Te quiero", // 西班牙语(亲密)
-                    "Eu amo-te", // 葡萄牙语(欧洲)
-                    "Rakastan sinua", // 芬兰语
-                    "Aishiteru", // 日语(正式)
-                ];
-                
-                this.init();
-            }
+        // 获取Canvas元素和上下文
+        const canvas = document.getElementById('heartCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // 高DPI屏幕适配
+        function setupCanvas() {
+            const dpr = window.devicePixelRatio || 1;
+            const rect = canvas.getBoundingClientRect();
             
-            init() {
-                // 设置Canvas尺寸
-                this.resizeCanvas();
-                
-                // 计算位置
-                this.calculatePositions();
-                
-                // 绑定事件
-                this.bindEvents();
-                
-                // 开始动画
-                this.startAnimation();
-            }
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
             
-            resizeCanvas() {
-                // 根据窗口大小调整Canvas
-                const container = this.canvas.parentElement;
-                const maxWidth = Math.min(600, container.clientWidth - 40);
-                const maxHeight = Math.min(500, window.innerHeight - 200);
-                
-                this.canvas.width = maxWidth;
-                this.canvas.height = maxHeight;
-                this.canvasWidth = maxWidth;
-                this.canvasHeight = maxHeight;
-            }
+            ctx.scale(dpr, dpr);
+            canvas.style.width = `${rect.width}px`;
+            canvas.style.height = `${rect.height}px`;
             
-            calculatePositions() {
-                this.positions = [];
-                const count = this.loveTexts.length;
-                
-                if (count === 0) return;
-                
-                const centerX = this.canvasWidth / 2;
-                const centerY = this.canvasHeight / 2;
-                const size = Math.min(this.canvasWidth, this.canvasHeight) * 0.4;
-                
-                for (let i = 0; i < count; i++) {
-                    const t = 2 * Math.PI * i / count;
-                    const point = this.calculateLovePoint(t, centerX, centerY, size);
-                    this.positions.push(point);
-                }
-                
-                console.log('位置计算完成：', this.positions.length, '个位置');
-            }
+            // 开启高质量渲染
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+        }
+
+        // 初始化画布
+        setupCanvas();
+
+        // 50种语言的"我爱你"
+        const loveTexts = [
+            "我爱你", "我中意你", "我爱侬", "我欢喜你", "勾买蒙", "额爱你",
+            "I love you", "Je t'aime", "Ich liebe dich", "Ti amo", "Te amo",
+            "あいしてる", "사랑해", "أحبك", "Σ'αγαπώ", "Ik hou van jou", 
+            "Jag älskar dig", "Jeg elsker deg", "Rwy'n dy garu di", "Mahal kita",
+            "Szeretlek", "Volim te", "Miluji tě", "Kocham Cię", "Te iubesc",
+            "Ljubim te", "Mina armastan sind", "Es mīlu tevi", "Aš tave myliu",
+            "Обіжаю тебе", "Te dua", "Seni seviyorum", "Mən səni sevirəm",
+            "მიყვარხარ", "Men seni süyemin", "ฉันรักคุณ", "Tôi yêu bạn",
+            "Nakupenda", "Wo ie ni", "Ke a go rata", "Ndinokuda",
+            "Mena urang beungeut", "Të dua", "Mwen renmen ou", "Is breá liom tú",
+            "Tha gràdh agam ort", "Ek het jou lief", "Ina sonki", "Ngiyakuthanda",
+            "Ke a lo rata", "Ndimakukonda"
+        ];
+
+        // 颜色数组
+        const colors = [
+            "#FFB6C1", "#FF69B4", "#FF1493", "#FFC0CB", "#DB7093",
+            "#FF6B9D", "#FF8DA1", "#FFA7B6", "#FFC4D6", "#FFDDE6",
+            "#FF7EB3", "#FF66B2", "#FF3399", "#FF0080", "#CC0066"
+        ];
+
+        // 生成爱心形状点（轨道不显示）
+        function generateHeartPoints(count) {
+            const points = [];
+            const centerX = (canvas.width / window.devicePixelRatio) / 2;
+            const centerY = (canvas.height / window.devicePixelRatio) / 2;
+            const size = Math.min(
+                canvas.width / window.devicePixelRatio, 
+                canvas.height / window.devicePixelRatio
+            ) * 0.3;
             
-            calculateLovePoint(t, cx, cy, size) {
+            for (let i = 0; i < count; i++) {
+                const t = (i / count) * 2 * Math.PI;
+                // 爱心参数方程
                 const x = 16 * Math.pow(Math.sin(t), 3);
                 const y = 13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t);
                 
-                return {
-                    x: cx + x * size / 16,
-                    y: cy - y * size / 16,
-                    angle: t
-                };
-            }
-            
-            bindEvents() {
-                // 暂停/继续按钮
-                this.toggleBtn.addEventListener('click', () => {
-                    this.toggleAnimation();
-                });
+                // 计算每个点的切线角度（用于文字朝向）
+                const angle = Math.atan2(
+                    -(-13 * Math.sin(t) + 10 * Math.sin(2*t) + 6 * Math.sin(3*t) + 4 * Math.sin(4*t)),
+                    48 * Math.pow(Math.sin(t), 2) * Math.cos(t)
+                );
                 
-                // 窗口大小变化
-                window.addEventListener('resize', () => {
-                    this.resizeCanvas();
-                    this.calculatePositions();
-                });
-                
-                // 页面可见性变化
-                document.addEventListener('visibilitychange', () => {
-                    if (document.hidden) {
-                        this.pauseAnimation();
-                    } else {
-                        this.resumeAnimation();
-                    }
+                points.push({
+                    x: centerX + x * size / 16,
+                    y: centerY - y * size / 16,
+                    angle: angle // 保存角度用于文字朝向校正
                 });
             }
-            
-            startAnimation() {
-                this.animate();
-            }
-            
-            animate() {
-                if (this.isPaused) {
-                    this.animationId = requestAnimationFrame(() => this.animate());
-                    return;
-                }
-                
-                this.drawFrame();
-                
-                this.angle += 0.03;
-                if (this.angle > 2 * Math.PI) {
-                    this.angle = 0;
-                }
-                
-                this.animationId = requestAnimationFrame(() => this.animate());
-            }
-            
-            drawFrame() {
-                const ctx = this.ctx;
-                
-                if (!ctx || !this.positions || this.positions.length === 0) return;
-                
-                // 清除画布
-                ctx.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
-                
-                // 绘制背景
-                ctx.fillStyle = '#000000';
-                ctx.fillRect(0, 0, this.canvasWidth, this.canvasHeight);
-                
-                // 绘制爱心路径
-                this.drawLovePath();
-                
-                // 绘制文本
-                const count = this.loveTexts.length;
-                
-                for (let i = 0; i < count; i++) {
-                    const currentIndex = (i + Math.floor(this.angle / (2 * Math.PI) * count)) % count;
-                    const pos = this.positions[currentIndex];
-                    const text = this.loveTexts[i];
-                    
-                    ctx.save();
-                    ctx.translate(pos.x, pos.y);
-                    ctx.rotate(pos.angle + Math.PI / 2);
-                    
-                    ctx.font = '14px Arial, sans-serif';
-                    ctx.fillStyle = `hsl(${(i * 360 / count) % 360}, 70%, 60%)`;
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    ctx.shadowColor = `hsl(${(i * 360 / count) % 360}, 70%, 60%)`;
-                    ctx.shadowBlur = 10;
-                    
-                    ctx.fillText(text, 0, 0);
-                    ctx.restore();
-                }
-            }
-            
-            drawLovePath() {
-                const ctx = this.ctx;
-                const centerX = this.canvasWidth / 2;
-                const centerY = this.canvasHeight / 2;
-                const size = Math.min(this.canvasWidth, this.canvasHeight) * 0.4;
-                
-                ctx.beginPath();
-                
-                for (let t = 0; t <= 2 * Math.PI; t += 0.05) {
-                    const point = this.calculateLovePoint(t, centerX, centerY, size);
-                    if (t === 0) {
-                        ctx.moveTo(point.x, point.y);
-                    } else {
-                        ctx.lineTo(point.x, point.y);
-                    }
-                }
-                
-                ctx.closePath();
-                ctx.strokeStyle = 'rgba(255, 183, 197, 0.3)';
-                ctx.lineWidth = 2;
-                ctx.stroke();
-            }
-            
-            toggleAnimation() {
-                this.isPaused = !this.isPaused;
-                
-                if (this.isPaused) {
-                    this.toggleBtn.textContent = '继续动画';
-                    this.status.textContent = '动画已暂停';
-                } else {
-                    this.toggleBtn.textContent = '暂停动画';
-                    this.status.textContent = '动画运行中...';
-                }
-                
-                console.log('动画状态：', this.isPaused ? '暂停' : '运行');
-            }
-            
-            pauseAnimation() {
-                if (!this.isPaused) {
-                    this.isPaused = true;
-                    this.toggleBtn.textContent = '继续动画';
-                    this.status.textContent = '动画已暂停';
-                }
-            }
-            
-            resumeAnimation() {
-                if (this.isPaused) {
-                    this.isPaused = false;
-                    this.toggleBtn.textContent = '暂停动画';
-                    this.status.textContent = '动画运行中...';
-                }
-            }
-            
-            destroy() {
-                if (this.animationId) {
-                    cancelAnimationFrame(this.animationId);
-                    this.animationId = null;
-                }
-            }
+            return points;
         }
-        
-        // 页面加载完成后初始化
-        window.addEventListener('load', () => {
-            const animation = new LoveHeartAnimation();
+
+        // 创建文字对象
+        const textObjects = [];
+        let heartPoints = generateHeartPoints(1500); // 爱心轨道点（不显示）
+        let mouse = { x: 0, y: 0, active: false };
+        let isMovingForward = true; // 控制文字移动方向
+
+        // 基础速度调整为原来的2/3
+        const baseSpeed = (window.innerWidth < 768 ? 0.15 : 0.20) * (2/3);
+
+        for (let i = 0; i < loveTexts.length; i++) {
+            const startIndex = Math.floor(i * heartPoints.length / loveTexts.length);
             
-            // 页面卸载时清理
-            window.addEventListener('beforeunload', () => {
-                animation.destroy();
+            textObjects.push({
+                text: loveTexts[i],
+                color: colors[i % colors.length],
+                size: (window.innerWidth < 768 ? 12 : 16) + Math.random() * 6,
+                currentIndex: startIndex,
+                speed: baseSpeed + (Math.random() * 0.06 - 0.03), // 微小速度差异
+                subPixelX: 0,
+                subPixelY: 0,
+                targetX: 0,
+                targetY: 0,
+                targetAngle: 0, // 目标角度，用于文字朝向
+                pulse: 0.8 + Math.random() * 0.4,
+                originalSize: 0
             });
+        }
+
+        // 初始化原始大小
+        textObjects.forEach(obj => {
+            obj.originalSize = obj.size;
+        });
+
+        // 预计算字体
+        function preloadFonts() {
+            textObjects.forEach(obj => {
+                ctx.font = `bold ${obj.size}px Arial`;
+                ctx.measureText(obj.text);
+            });
+        }
+
+        preloadFonts();
+
+        // 绘制函数
+        function draw() {
+            // 清除画布
+            const w = canvas.width / window.devicePixelRatio;
+            const h = canvas.height / window.devicePixelRatio;
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(0, 0, w, h);
+            
+            // 更新和绘制所有文字
+            textObjects.forEach(obj => {
+                // 根据方向更新位置
+                const speed = isMovingForward ? obj.speed : -obj.speed;
+                obj.currentIndex = (obj.currentIndex + speed + heartPoints.length) % heartPoints.length;
+                
+                // 获取当前和目标点
+                const currentIndex = Math.floor(obj.currentIndex);
+                const nextIndex = (currentIndex + 1) % heartPoints.length;
+                const fraction = obj.currentIndex - currentIndex;
+                
+                const currentPoint = heartPoints[currentIndex];
+                const nextPoint = heartPoints[nextIndex];
+                
+                // 线性插值实现更平滑的移动
+                obj.targetX = currentPoint.x + (nextPoint.x - currentPoint.x) * fraction;
+                obj.targetY = currentPoint.y + (nextPoint.y - currentPoint.y) * fraction;
+                obj.targetAngle = currentPoint.angle + (nextPoint.angle - currentPoint.angle) * fraction;
+                
+                // 鼠标交互 - 排斥效果
+                if (mouse.active) {
+                    const dx = obj.targetX - mouse.x;
+                    const dy = obj.targetY - mouse.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (dist < 80) {
+                        const repel = (80 - dist) / 80 * 15;
+                        const angle = Math.atan2(dy, dx);
+                        obj.targetX += Math.cos(angle) * repel;
+                        obj.targetY += Math.sin(angle) * repel;
+                    }
+                }
+                
+                // 缓动效果
+                const easing = 0.12;
+                obj.subPixelX += (obj.targetX - obj.subPixelX) * easing;
+                obj.subPixelY += (obj.targetY - obj.subPixelY) * easing;
+                
+                // 脉冲效果
+                obj.size = obj.originalSize * (1 + Math.sin(Date.now() * 0.0015 * obj.pulse) * 0.15);
+                
+                // 绘制文字 - 确保文字不会倒转
+                ctx.save();
+                
+                // 将坐标系原点移动到文字位置
+                ctx.translate(obj.subPixelX, obj.subPixelY);
+                
+                // 校正角度确保文字始终正立
+                let textAngle = obj.targetAngle;
+                
+                // 关键修正：确保文字不会倒转
+                // 检测角度是否会导致文字倒置，必要时翻转180度
+                if (textAngle > Math.PI/2 && textAngle < 3*Math.PI/2) {
+                    textAngle += Math.PI;
+                }
+                
+                ctx.rotate(textAngle);
+                
+                ctx.fillStyle = obj.color;
+                ctx.font = `bold ${obj.size}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                
+                // 发光效果
+                ctx.shadowColor = obj.color;
+                ctx.shadowBlur = 15;
+                ctx.shadowOffsetX = 0;
+                ctx.shadowOffsetY = 0;
+                
+                // 绘制文字
+                ctx.fillText(obj.text, 0, 0);
+                
+                ctx.restore();
+            });
+        }
+
+        // 动画循环
+        function animate(currentTime) {
+            // 只有页面可见时才绘制
+            if (document.visibilityState === 'visible') {
+                draw();
+            }
+            
+            requestAnimationFrame(animate);
+        }
+
+        // 启动动画
+        requestAnimationFrame(animate);
+
+        // 事件监听 - 鼠标移动
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            mouse = {
+                x: (e.clientX - rect.left),
+                y: (e.clientY - rect.top),
+                active: true
+            };
+        });
+
+        // 事件监听 - 触摸移动
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            const rect = canvas.getBoundingClientRect();
+            const touch = e.touches[0];
+            mouse = {
+                x: (touch.clientX - rect.left),
+                y: (touch.clientY - rect.top),
+                active: true
+            };
+        }, { passive: false });
+
+        // 事件监听 - 鼠标离开
+        canvas.addEventListener('mouseleave', () => {
+            mouse.active = false;
+        });
+
+        // 事件监听 - 触摸结束
+        canvas.addEventListener('touchend', () => {
+            mouse.active = false;
+        });
+
+        // 事件监听 - 点击切换方向
+        canvas.addEventListener('click', () => {
+            isMovingForward = !isMovingForward;
+        });
+
+        // 窗口大小变化时重置
+        window.addEventListener('resize', () => {
+            const dpr = window.devicePixelRatio || 1;
+            const oldRatio = textObjects.length > 0 
+                ? textObjects[0].currentIndex / heartPoints.length 
+                : 0;
+            
+            setupCanvas();
+            
+            // 重新生成爱心点并保持文字相对位置
+            const newHeartPoints = generateHeartPoints(1500);
+            textObjects.forEach(obj => {
+                obj.currentIndex = Math.floor(oldRatio * newHeartPoints.length);
+            });
+            
+            heartPoints = newHeartPoints;
         });
     </script>
 </body>
