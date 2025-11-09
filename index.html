@@ -17,7 +17,7 @@
             justify-content: center;
             align-items: center;
             height: 100vh;
-            font-family: 'Arial', sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
         canvas {
             display: block;
@@ -26,12 +26,13 @@
             position: absolute;
             top: 30px;
             color: white;
-            font-size: 28px;
+            font-size: 32px;
             text-align: center;
             width: 100%;
             z-index: 10;
-            text-shadow: 0 0 10px rgba(255, 105, 180, 0.7);
+            text-shadow: 0 0 15px rgba(255, 105, 180, 0.9);
             letter-spacing: 2px;
+            font-weight: 300;
         }
         .subtitle {
             position: absolute;
@@ -42,10 +43,55 @@
             width: 100%;
             z-index: 10;
         }
+        .controls {
+            position: absolute;
+            top: 80px;
+            display: flex;
+            gap: 15px;
+            z-index: 10;
+        }
+        .control-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+            backdrop-filter: blur(5px);
+        }
+        .control-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 105, 180, 0.4);
+        }
+        .info-panel {
+            position: absolute;
+            right: 20px;
+            top: 20px;
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            color: white;
+            font-size: 14px;
+            max-width: 250px;
+            backdrop-filter: blur(5px);
+        }
     </style>
 </head>
 <body>
-    <div class="title"></div>
+    <div class="title">车迟雨</div>
+    <div class="controls">
+        <button class="control-btn" id="speedUp">加速</button>
+        <button class="control-btn" id="speedDown">减速</button>
+        <button class="control-btn" id="togglePulse">切换脉动</button>
+        <button class="control-btn" id="toggleHeart">显示/隐藏爱心</button>
+    </div>
+    <div class="info-panel">
+
+    </div>
     <div class="subtitle">车迟雨</div>
     <canvas id="heartCanvas"></canvas>
 
@@ -55,6 +101,8 @@
             "我爱你", // 中文
             "I love you", // 英语
             "Je t'aime", // 法语
+            "Man tu sitaara doost daaram", // 波斯语
+            "Main tumse pyar karta hoon", // 印地语
             "Ich liebe dich", // 德语
             "Ti amo", // 意大利语
             "Te quiero", // 西班牙语
@@ -68,6 +116,8 @@
             "Mahal kita", // 菲律宾语
             "Ik hou van jou", // 荷兰语
             "Jag älskar dig", // 瑞典语
+            "Ami tomake bhalobashi", // 孟加拉语
+            "Naan unnai kaadhalikkiraen", // 泰米尔语
             "Jeg elsker deg", // 挪威语
             "Rakastan sinua", // 芬兰语
             "Miluji tě", // 捷克语
@@ -90,10 +140,6 @@
             "Wo ie ni", // 约鲁巴语
             "Mwen renmen ou", // 海地克里奥尔语
             "Tora dust midaram", // 达里语
-            "Man tu sitaara doost daaram", // 波斯语
-            "Main tumse pyar karta hoon", // 印地语
-            "Ami tomake bhalobashi", // 孟加拉语
-            "Naan unnai kaadhalikkiraen", // 泰米尔语
             "Nenu ninnu premistunnanu", // 泰卢固语
             "Maim tuhanu pi'ara karada ham", // 旁遮普语
             "ฉันรักคุณ", // 泰语
@@ -133,13 +179,10 @@
             };
         }
         
-        // 计算爱心轨迹的切线角度（用于确定文字方向）
-        function getHeartTangent(t) {
-            const delta = 0.01;
-            const p1 = getHeartPoint(t, 1);
-            const p2 = getHeartPoint(t + delta, 1);
-            return Math.atan2(p2.y - p1.y, p2.x - p1.x);
-        }
+        // 全局动画参数
+        let globalSpeed = 0.005;
+        let pulseEffect = true;
+        let showHeart = true;
         
         // 文字对象类
         class LoveText {
@@ -148,16 +191,17 @@
                 this.index = index;
                 this.total = total;
                 this.phase = (index / total) * Math.PI * 2; // 初始相位
-                this.speed = 0.002; // 所有文字速度相同
                 this.color = `hsl(${index * 7}, 100%, 70%)`;
-                this.size = 10 + Math.random() * 6;
+                this.size = 12 + Math.random() * 8;
                 this.x = 0;
                 this.y = 0;
                 this.scale = 1;
+                this.pulsePhase = Math.random() * Math.PI * 2;
+                this.rotation = 0;
             }
             
             update() {
-                this.phase += this.speed;
+                this.phase += globalSpeed;
                 
                 // 计算爱心轨迹上的位置
                 const scale = Math.min(canvas.width, canvas.height) / 40;
@@ -172,18 +216,28 @@
                 );
                 const maxDistance = scale * 20;
                 this.scale = 0.7 + 0.6 * (1 - distanceFromCenter / maxDistance);
+                
+                // 脉动效果
+                if (pulseEffect) {
+                    this.pulsePhase += 0.02;
+                    this.scale *= 0.9 + 0.1 * Math.sin(this.pulsePhase);
+                }
+                
+                // 轻微旋转效果
+                this.rotation = Math.sin(this.phase) * 0.1;
             }
             
             draw() {
                 ctx.save();
                 ctx.translate(this.x, this.y);
                 ctx.scale(this.scale, this.scale);
+                ctx.rotate(this.rotation);
                 ctx.fillStyle = this.color;
-                ctx.font = `bold ${this.size}px Arial`;
+                ctx.font = `bold ${this.size}px 'Segoe UI', Arial, sans-serif`;
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
                 ctx.shadowColor = this.color;
-                ctx.shadowBlur = 10;
+                ctx.shadowBlur = 15;
                 ctx.fillText(this.text, 0, 0);
                 ctx.restore();
             }
@@ -196,6 +250,8 @@
         
         // 绘制爱心轨道
         function drawHeartTrack() {
+            if (!showHeart) return;
+            
             ctx.beginPath();
             const scale = Math.min(canvas.width, canvas.height) / 40;
             
@@ -209,34 +265,60 @@
             }
             
             ctx.closePath();
-            ctx.strokeStyle = 'rgba(0, 0, 0, 0)';
-            ctx.lineWidth = 1;
+            
+            // 创建渐变描边
+            const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+            gradient.addColorStop(0, '#ff1493');
+            gradient.addColorStop(0.5, '#ff69b4');
+            gradient.addColorStop(1, '#ffb6c1');
+            
+            ctx.strokeStyle = gradient;
+            ctx.lineWidth = 2;
             ctx.stroke();
+            
+            // 添加内发光效果
+            ctx.shadowColor = '#ff69b4';
+            ctx.shadowBlur = 20;
+            ctx.stroke();
+            ctx.shadowBlur = 0;
         }
         
-        // 绘制背景星星
-        function drawStars() {
-            for (let i = 0; i < 100; i++) {
-                const x = Math.random() * canvas.width;
-                const y = Math.random() * canvas.height;
-                const radius = Math.random() * 1.5;
-                const opacity = Math.random() * 0.7 + 0.3;
-                
-                ctx.beginPath();
-                ctx.arc(x, y, radius, 0, Math.PI * 2);
-                ctx.fillStyle = `rgba(255, 255, 255, ${opacity})`;
-                ctx.fill();
-            }
+        // 绘制背景光晕
+        function drawGlow() {
+            const gradient = ctx.createRadialGradient(
+                canvas.width/2, canvas.height/2, 0,
+                canvas.width/2, canvas.height/2, Math.min(canvas.width, canvas.height)/2
+            );
+            gradient.addColorStop(0, 'rgba(255, 20, 147, 0.1)');
+            gradient.addColorStop(0.7, 'rgba(255, 105, 180, 0.05)');
+            gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+            
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+        
+        // 绘制中心亮点
+        function drawCenterGlow() {
+            const gradient = ctx.createRadialGradient(
+                canvas.width/2, canvas.height/2, 0,
+                canvas.width/2, canvas.height/2, 100
+            );
+            gradient.addColorStop(0, 'rgba(255, 255, 255, 0.2)');
+            gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+            
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
         }
         
         // 动画循环
         function animate() {
-            // 清除画布
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+            // 清除画布 - 使用不透明背景避免拖尾
+            ctx.fillStyle = '#000';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             
             // 绘制背景元素
-            drawStars();
+            drawGlow();
+            drawCenterGlow();
             drawHeartTrack();
             
             // 更新并绘制所有文字
@@ -247,6 +329,23 @@
             
             requestAnimationFrame(animate);
         }
+        
+        // 控制按钮事件
+        document.getElementById('speedUp').addEventListener('click', () => {
+            globalSpeed = Math.min(globalSpeed + 0.001, 0.02);
+        });
+        
+        document.getElementById('speedDown').addEventListener('click', () => {
+            globalSpeed = Math.max(globalSpeed - 0.001, 0.001);
+        });
+        
+        document.getElementById('togglePulse').addEventListener('click', () => {
+            pulseEffect = !pulseEffect;
+        });
+        
+        document.getElementById('toggleHeart').addEventListener('click', () => {
+            showHeart = !showHeart;
+        });
         
         // 启动动画
         animate();
