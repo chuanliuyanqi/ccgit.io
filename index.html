@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>50种语言"我爱你"爱心环绕</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #000;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+        }
+        
+        #info {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            color: white;
+            z-index: 100;
+            font-size: 14px;
+            background: rgba(0,0,0,0.5);
+            padding: 5px;
+            border-radius: 5px;
+        }
+        
+        canvas {
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: crisp-edges;
+        }
+    </style>
+</head>
+<body>
+    
+    <canvas id="heartCanvas"></canvas>
+
+    <script>
+        // 获取Canvas元素和上下文
+        const canvas = document.getElementById('heartCanvas');
+        const ctx = canvas.getContext('2d', { alpha: false });
+        const info = document.getElementById('info');
+        
+        // 设置Canvas大小为窗口大小
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // 开启抗锯齿
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+
+        // 50种语言的"我爱你"
+        const loveTexts = [
+            "我爱你", "I love you", "Je t'aime", "Ich liebe dich", "Ti amo",
+            "Te amo", "あいしてる", "사랑해", "أحبك", "Σ'αγαπώ",
+            "Ik hou van jou", "Jag älskar dig", "Jeg elsker deg", "Rwy'n dy garu di",
+            "Mahal kita", "Szeretlek", "Volim te", "Miluji tě", "Kocham Cię",
+            "Te iubesc", "Ljubim te", "Mina armastan sind", "Es mīlu tevi",
+            "Aš tave myliu", "Обіжаю тебе", "Te dua", "Seni seviyorum",
+            "Mən səni sevirəm", "მიყვარხარ", "Men seni süyemin", "Mahal kita",
+            "ฉันรักคุณ", "Tôi yêu bạn", "Nakupenda", "Wo ie ni", "Ke a go rata",
+            "Ndinokuda", "Mena urang beungeut", "Të dua", "Mwen renmen ou",
+            "Is breá liom tú", "Tha gràdh agam ort", "Ek het jou lief",
+            "Ina sonki", "Ngiyakuthanda", "Ke a lo rata", "Ndimakukonda",
+            "我中意你", "我爱侬", "我欢喜你", "勾买蒙", "额爱你"
+        ];
+
+        // 颜色数组
+        const colors = [
+            "#FFB6C1", "#FF69B4", "#FF1493", "#FFC0CB", "#DB7093",
+            "#FF6B9D", "#FF8DA1", "#FFA7B6", "#FFC4D6", "#FFDDE6"
+        ];
+
+        // 生成更密集的爱心形状点
+        function generateHeartPoints(count) {
+            const points = [];
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const size = Math.min(canvas.width, canvas.height) * 0.3;
+            
+            for (let i = 0; i < count; i++) {
+                const t = (i / count) * 2 * Math.PI;
+                // 爱心参数方程
+                const x = 16 * Math.pow(Math.sin(t), 3);
+                const y = 13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t);
+                
+                points.push({
+                    x: centerX + x * size / 16,
+                    y: centerY - y * size / 16
+                });
+            }
+            return points;
+        }
+
+        // 创建文字对象
+        const textObjects = [];
+        const heartPoints = generateHeartPoints(1000); // 更密集的点
+
+        // 统一的速度 - 比原来快两倍
+        const uniformSpeed = 0.20; // 原来是 0.03 + 0.02 = 0.05，现在 0.12 是原来的约2.4倍
+
+        for (let i = 0; i < loveTexts.length; i++) {
+            const startIndex = Math.floor(i * heartPoints.length / loveTexts.length);
+            
+            textObjects.push({
+                text: loveTexts[i],
+                color: colors[i % colors.length],
+                size: 16 + Math.random() * 8,
+                currentIndex: startIndex,
+                // 所有文字使用相同的速度
+                speed: uniformSpeed,
+                // 添加子像素位置
+                subPixelX: 0,
+                subPixelY: 0,
+                // 添加缓动目标
+                targetX: 0,
+                targetY: 0
+            });
+        }
+
+        // 预计算字体
+        function preloadFonts() {
+            ctx.font = '16px Arial';
+            loveTexts.forEach(text => {
+                ctx.measureText(text);
+            });
+        }
+
+        preloadFonts();
+
+        // 绘制函数
+        function draw() {
+            // 清除画布 - 使用更柔和的清除方式
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // 更新和绘制所有文字
+            textObjects.forEach(obj => {
+                // 更新位置 - 使用浮点数索引实现子像素移动
+                obj.currentIndex = (obj.currentIndex + obj.speed) % heartPoints.length;
+                
+                // 获取当前和目标点
+                const currentIndex = Math.floor(obj.currentIndex);
+                const nextIndex = (currentIndex + 1) % heartPoints.length;
+                const fraction = obj.currentIndex - currentIndex;
+                
+                const currentPoint = heartPoints[currentIndex];
+                const nextPoint = heartPoints[nextIndex];
+                
+                // 线性插值实现更平滑的移动
+                obj.targetX = currentPoint.x + (nextPoint.x - currentPoint.x) * fraction;
+                obj.targetY = currentPoint.y + (nextPoint.y - currentPoint.y) * fraction;
+                
+                // 使用缓动函数实现更平滑的移动
+                const easing = 0.1;
+                obj.subPixelX += (obj.targetX - obj.subPixelX) * easing;
+                obj.subPixelY += (obj.targetY - obj.subPixelY) * easing;
+                
+                // 绘制文字
+                ctx.save();
+                
+                // 设置高质量渲染
+                ctx.fillStyle = obj.color;
+                ctx.font = `bold ${Math.round(obj.size)}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                
+                // 多重阴影实现发光效果
+                ctx.shadowColor = obj.color;
+                ctx.shadowBlur = 20;
+                ctx.shadowOffsetX = 0;
+                ctx.shadowOffsetY = 0;
+                
+                // 使用子像素位置绘制
+                ctx.fillText(obj.text, obj.subPixelX, obj.subPixelY);
+                
+                ctx.restore();
+            });
+            
+            // 显示信息
+            ctx.save();
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = 'rgba(255,255,255,0.8)';
+            ctx.font = '14px Arial';
+            ctx.textAlign = 'left';
+            ctx.fillText(`语言数量: ${textObjects.length}`, 10, canvas.height - 40);
+            ctx.fillText(`速度: ${uniformSpeed.toFixed(2)}`, 10, canvas.height - 20);
+            ctx.restore();
+        }
+
+        // FPS计算
+        let lastTime = 0;
+        let fps = 60;
+        let frameCount = 0;
+        let lastFpsUpdate = 0;
+
+        // 动画循环
+        function animate(currentTime) {
+            if (!lastTime) lastTime = currentTime;
+            const deltaTime = currentTime - lastTime;
+            lastTime = currentTime;
+            
+            frameCount++;
+            if (currentTime - lastFpsUpdate >= 1000) {
+                fps = frameCount * 1000 / (currentTime - lastFpsUpdate);
+                frameCount = 0;
+                lastFpsUpdate = currentTime;
+            }
+            
+            draw();
+            requestAnimationFrame(animate);
+        }
+
+        // 启动动画
+        requestAnimationFrame(animate);
+
+        // 窗口大小变化时重置
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            // 重新生成爱心点
+            const newHeartPoints = generateHeartPoints(1000);
+            textObjects.forEach((obj, i) => {
+                const ratio = obj.currentIndex / heartPoints.length;
+                obj.currentIndex = Math.floor(ratio * newHeartPoints.length);
+            });
+            heartPoints.length = 0;
+            heartPoints.push(...newHeartPoints);
+        });
+
+        // 添加性能优化
+        let isPageVisible = true;
+        document.addEventListener('visibilitychange', () => {
+            isPageVisible = !document.hidden;
+            if (isPageVisible) {
+                lastTime = performance.now();
+            }
+        });
+    </script>
+</body>
+</html>
