@@ -2,443 +2,186 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>50种语言"我爱你"环绕</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>50种语言表达"我爱你"</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-        
         body {
-            background: #000;
+            background-color: #000;
             overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
             font-family: Arial, sans-serif;
-            touch-action: none;
         }
-        
-        #controls {
-            position: fixed;
-            top: 10px;
-            left: 10px;
-            color: white;
-            z-index: 100;
-            font-size: 14px;
-            background: rgba(0,0,0,0.6);
-            padding: 8px 12px;
-            border-radius: 8px;
-            backdrop-filter: blur(5px);
-        }
-        
-        #overlay {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: rgba(255,255,255,0.7);
-            font-size: 1rem;
-            z-index: 90;
-            transition: opacity 0.5s ease;
-            pointer-events: none;
-        }
-        
-        #overlay.hidden {
-            opacity: 0;
-        }
-        
         canvas {
             display: block;
+        }
+        .title {
+            position: absolute;
+            top: 20px;
+            color: white;
+            font-size: 24px;
+            text-align: center;
+            width: 100%;
+            z-index: 10;
         }
     </style>
 </head>
 <body>
-    <div id="overlay">点击或拖动与文字互动</div>
-    <div id="controls">
-        <div>语言: <span id="langCount">0</span></div>
-        <div>FPS: <span id="fps">0</span></div>
-    </div>
+    <div class="title">50种语言表达"我爱你"</div>
     <canvas id="heartCanvas"></canvas>
 
     <script>
-        // 获取Canvas元素和上下文
+        // 50种语言的"我爱你"
+        const lovePhrases = [
+            "我爱你", // 中文
+            "I love you", // 英语
+            "Je t'aime", // 法语
+            "Ich liebe dich", // 德语
+            "Ti amo", // 意大利语
+            "Te quiero", // 西班牙语
+            "Eu te amo", // 葡萄牙语
+            "愛してる", // 日语
+            "사랑해", // 韩语
+            "Я тебя люблю", // 俄语
+            "أحبك", // 阿拉伯语
+            "Σ'αγαπώ", // 希腊语
+            "Seni seviyorum", // 土耳其语
+            "Mahal kita", // 菲律宾语
+            "Ik hou van jou", // 荷兰语
+            "Jag älskar dig", // 瑞典语
+            "Jeg elsker deg", // 挪威语
+            "Rakastan sinua", // 芬兰语
+            "Miluji tě", // 捷克语
+            "Kocham Cię", // 波兰语
+            "Szeretlek", // 匈牙利语
+            "Te iubesc", // 罗马尼亚语
+            "Volim te", // 克罗地亚语
+            "Ljubim te", // 塞尔维亚语
+            "Обичам те", // 保加利亚语
+            "愛你", // 中文(粤语)
+            "මම ඔයාට ආදරෙයි", // 僧伽罗语
+            "Mina armastan sind", // 爱沙尼亚语
+            "Es tevi mīlu", // 拉脱维亚语
+            "Aš tave myliu", // 立陶宛语
+            "Unë të dua", // 阿尔巴尼亚语
+            "Ina sonki", // 豪萨语
+            "Nakupenda", // 斯瓦希里语
+            "Ke a go rata", // 茨瓦纳语
+            "Ngiyakuthanda", // 祖鲁语
+            "Wo ie ni", // 约鲁巴语
+            "Mwen renmen ou", // 海地克里奥尔语
+            "Tora dust midaram", // 达里语
+            "Man tu sitaara doost daaram", // 波斯语
+            "Main tumse pyar karta hoon", // 印地语
+            "Ami tomake bhalobashi", // 孟加拉语
+            "Naan unnai kaadhalikkiraen", // 泰米尔语
+            "Nenu ninnu premistunnanu", // 泰卢固语
+            "Maim tuhanu pi'ara karada ham", // 旁遮普语
+            "ฉันรักคุณ", // 泰语
+            "Tôi yêu bạn", // 越南语
+            "Saya sayang awak", // 马来语
+            "Mahal kita", // 他加禄语
+            "Aloha wau iā ʻoe", // 夏威夷语
+            "Asav mavi" // 切罗基语
+        ];
+
         const canvas = document.getElementById('heartCanvas');
         const ctx = canvas.getContext('2d');
-        const langCountEl = document.getElementById('langCount');
-        const fpsEl = document.getElementById('fps');
-        const overlay = document.getElementById('overlay');
         
-        // 高DPI屏幕适配
-        function setupCanvas() {
-            const dpr = window.devicePixelRatio || 1;
-            const rect = canvas.getBoundingClientRect();
-            
-            canvas.width = rect.width * dpr;
-            canvas.height = rect.height * dpr;
-            
-            ctx.scale(dpr, dpr);
-            canvas.style.width = `${rect.width}px`;
-            canvas.style.height = `${rect.height}px`;
-            
-            // 开启高质量渲染
-            ctx.imageSmoothingEnabled = true;
-            ctx.imageSmoothingQuality = 'high';
+        // 设置canvas尺寸为窗口大小
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
         }
-
-        // 初始化画布
-        setupCanvas();
-
-        // 50种语言的"我爱你"
-        const loveTexts = [
-            "我爱你", "我中意你", "我爱侬", "我欢喜你", "勾买蒙", "额爱你",
-            "I love you", "Je t'aime", "Ich liebe dich", "Ti amo", "Te amo",
-            "あいしてる", "사랑해", "أحبك", "Σ'αγαπώ", "Ik hou van jou", 
-            "Jag älskar dig", "Jeg elsker deg", "Rwy'n dy garu di", "Mahal kita",
-            "Szeretlek", "Volim te", "Miluji tě", "Kocham Cię", "Te iubesc",
-            "Ljubim te", "Mina armastan sind", "Es mīlu tevi", "Aš tave myliu",
-            "Обіжаю тебе", "Te dua", "Seni seviyorum", "Mən səni sevirəm",
-            "მიყვარხარ", "Men seni süyemin", "ฉันรักคุณ", "Tôi yêu bạn",
-            "Nakupenda", "Wo ie ni", "Ke a go rata", "Ndinokuda",
-            "Mena urang beungeut", "Të dua", "Mwen renmen ou", "Is breá liom tú",
-            "Tha gràdh agam ort", "Ek het jou lief", "Ina sonki", "Ngiyakuthanda",
-            "Ke a lo rata", "Ndimakukonda"
-        ];
-
-        // 更新语言数量显示
-        langCountEl.textContent = loveTexts.length;
-
-        // 颜色数组
-        const colors = [
-            "#FFB6C1", "#FF69B4", "#FF1493", "#FFC0CB", "#DB7093",
-            "#FF6B9D", "#FF8DA1", "#FFA7B6", "#FFC4D6", "#FFDDE6",
-            "#FF7EB3", "#FF66B2", "#FF3399", "#FF0080", "#CC0066"
-        ];
-
-        // 粒子类
-        class Particle {
-            constructor() {
-                this.reset();
-                this.color = colors[Math.floor(Math.random() * colors.length)];
-                this.size = Math.random() * 2 + 0.5;
-                this.alpha = Math.random() * 0.5 + 0.1;
+        
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+        
+        // 爱心参数方程
+        function heartX(t) {
+            return 16 * Math.pow(Math.sin(t), 3);
+        }
+        
+        function heartY(t) {
+            return 13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t);
+        }
+        
+        // 文字对象类
+        class LoveText {
+            constructor(text, index, total) {
+                this.text = text;
+                this.index = index;
+                this.total = total;
+                this.angle = (index / total) * Math.PI * 2;
+                this.speed = 0.002;
+                this.color = `hsl(${index * 7}, 100%, 70%)`;
+                this.size = 14 + Math.random() * 6;
+                this.x = 0;
+                this.y = 0;
+                this.scale = 1;
             }
             
-            reset() {
-                this.x = Math.random() * canvas.width / window.devicePixelRatio;
-                this.y = Math.random() * canvas.height / window.devicePixelRatio;
-                this.speedX = (Math.random() - 0.5) * 0.6;
-                this.speedY = (Math.random() - 0.5) * 0.6;
-            }
-            
-            update(mouse) {
-                // 鼠标吸引效果
-                if (mouse && mouse.active) {
-                    const dx = mouse.x - this.x;
-                    const dy = mouse.y - this.y;
-                    const dist = Math.sqrt(dx * dx + dy * dy);
-                    
-                    if (dist < 100) {
-                        const force = (100 - dist) / 100 * 0.05;
-                        this.x += dx * force;
-                        this.y += dy * force;
-                    }
-                }
+            update() {
+                this.angle += this.speed;
                 
-                this.x += this.speedX;
-                this.y += this.speedY;
+                // 计算爱心轨迹上的位置
+                const t = this.angle;
+                const scale = Math.min(canvas.width, canvas.height) / 40;
                 
-                // 边界检测
-                if (this.x < 0) this.x = canvas.width / window.devicePixelRatio;
-                if (this.x > canvas.width / window.devicePixelRatio) this.x = 0;
-                if (this.y < 0) this.y = canvas.height / window.devicePixelRatio;
-                if (this.y > canvas.height / window.devicePixelRatio) this.y = 0;
+                this.x = canvas.width / 2 + heartX(t) * scale;
+                this.y = canvas.height / 2 - heartY(t) * scale;
+                
+                // 计算缩放效果，使文字在靠近观察者时变大
+                const distanceFromCenter = Math.sqrt(
+                    Math.pow(this.x - canvas.width/2, 2) + 
+                    Math.pow(this.y - canvas.height/2, 2)
+                );
+                const maxDistance = scale * 20;
+                this.scale = 0.7 + 0.6 * (1 - distanceFromCenter / maxDistance);
             }
             
             draw() {
                 ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.scale(this.scale, this.scale);
                 ctx.fillStyle = this.color;
-                ctx.globalAlpha = this.alpha;
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.restore();
-            }
-        }
-
-        // 生成圆形路径点
-        function generateCirclePoints(count) {
-            const points = [];
-            const centerX = (canvas.width / window.devicePixelRatio) / 2;
-            const centerY = (canvas.height / window.devicePixelRatio) / 2;
-            // 根据屏幕尺寸动态调整圆的大小
-            const radius = Math.min(
-                canvas.width / window.devicePixelRatio, 
-                canvas.height / window.devicePixelRatio
-            ) * 0.35;
-            
-            for (let i = 0; i < count; i++) {
-                const angle = (i / count) * 2 * Math.PI;
-                // 圆形参数方程
-                const x = centerX + radius * Math.cos(angle);
-                const y = centerY + radius * Math.sin(angle);
-                
-                points.push({
-                    x: x,
-                    y: y,
-                    angle: angle // 保存角度用于文字朝向
-                });
-            }
-            return points;
-        }
-
-        // 创建文字对象
-        const textObjects = [];
-        let circlePoints = generateCirclePoints(1500); // 圆形路径点
-        const particles = [];
-        let mouse = { x: 0, y: 0, active: false };
-        let isMovingForward = true; // 控制文字移动方向
-
-        // 创建背景粒子
-        const particleCount = window.innerWidth < 768 ? 100 : 200;
-        for (let i = 0; i < particleCount; i++) {
-            particles.push(new Particle());
-        }
-
-        // 基础速度调整为原来的2/3
-        const baseSpeed = (window.innerWidth < 768 ? 0.15 : 0.20) * (2/3);
-
-        for (let i = 0; i < loveTexts.length; i++) {
-            const startIndex = Math.floor(i * circlePoints.length / loveTexts.length);
-            
-            textObjects.push({
-                text: loveTexts[i],
-                color: colors[i % colors.length],
-                size: (window.innerWidth < 768 ? 12 : 16) + Math.random() * 6,
-                currentIndex: startIndex,
-                speed: baseSpeed + (Math.random() * 0.08 - 0.04), // 微小速度差异
-                subPixelX: 0,
-                subPixelY: 0,
-                targetX: 0,
-                targetY: 0,
-                pulse: 0.8 + Math.random() * 0.4, // 脉冲动画参数
-                originalSize: 0 // 保存原始大小用于脉冲效果
-            });
-        }
-
-        // 初始化原始大小
-        textObjects.forEach(obj => {
-            obj.originalSize = obj.size;
-        });
-
-        // 预计算字体
-        function preloadFonts() {
-            textObjects.forEach(obj => {
-                ctx.font = `bold ${obj.size}px Arial`;
-                ctx.measureText(obj.text);
-            });
-        }
-
-        preloadFonts();
-
-        // 绘制函数
-        function draw() {
-            // 清除画布
-            const w = canvas.width / window.devicePixelRatio;
-            const h = canvas.height / window.devicePixelRatio;
-            ctx.fillStyle = '#000000';
-            ctx.fillRect(0, 0, w, h);
-            
-            // 绘制粒子
-            particles.forEach(particle => {
-                particle.update(mouse);
-                particle.draw();
-            });
-            
-            // 更新和绘制所有文字
-            textObjects.forEach(obj => {
-                // 根据方向更新位置
-                const speed = isMovingForward ? obj.speed : -obj.speed;
-                obj.currentIndex = (obj.currentIndex + speed + circlePoints.length) % circlePoints.length;
-                
-                // 获取当前和目标点
-                const currentIndex = Math.floor(obj.currentIndex);
-                const nextIndex = (currentIndex + 1) % circlePoints.length;
-                const fraction = obj.currentIndex - currentIndex;
-                
-                const currentPoint = circlePoints[currentIndex];
-                const nextPoint = circlePoints[nextIndex];
-                
-                // 线性插值实现更平滑的移动
-                obj.targetX = currentPoint.x + (nextPoint.x - currentPoint.x) * fraction;
-                obj.targetY = currentPoint.y + (nextPoint.y - currentPoint.y) * fraction;
-                
-                // 鼠标交互 - 排斥效果
-                if (mouse.active) {
-                    const dx = obj.targetX - mouse.x;
-                    const dy = obj.targetY - mouse.y;
-                    const dist = Math.sqrt(dx * dx + dy * dy);
-                    
-                    if (dist < 80) {
-                        const repel = (80 - dist) / 80 * 15;
-                        const angle = Math.atan2(dy, dx);
-                        obj.targetX += Math.cos(angle) * repel;
-                        obj.targetY += Math.sin(angle) * repel;
-                    }
-                }
-                
-                // 缓动效果
-                const easing = 0.12;
-                obj.subPixelX += (obj.targetX - obj.subPixelX) * easing;
-                obj.subPixelY += (obj.targetY - obj.subPixelY) * easing;
-                
-                // 脉冲效果 - 大小变化
-                obj.size = obj.originalSize * (1 + Math.sin(Date.now() * 0.0015 * obj.pulse) * 0.15);
-                
-                // 绘制文字 - 所有文字都保持水平显示
-                ctx.save();
-                
-                // 将坐标系原点移动到文字位置
-                ctx.translate(obj.subPixelX, obj.subPixelY);
-                
-                // 不再旋转文字，保持水平
-                // ctx.rotate(0); // 不需要旋转，文字自然就是水平的
-                
-                ctx.fillStyle = obj.color;
-                ctx.font = `bold ${obj.size}px Arial`;
+                ctx.font = `${this.size}px Arial`;
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                
-                // 发光效果
-                ctx.shadowColor = obj.color;
-                ctx.shadowBlur = 15;
-                ctx.shadowOffsetX = 0;
-                ctx.shadowOffsetY = 0;
-                
-                // 绘制文字
-                ctx.fillText(obj.text, 0, 0);
-                
+                ctx.fillText(this.text, 0, 0);
                 ctx.restore();
-            });
+            }
         }
-
-        // FPS计算和控制
-        let lastTime = 0;
-        let fps = 60;
-        let frameCount = 0;
-        let lastFpsUpdate = 0;
-
+        
+        // 创建文字对象
+        const texts = lovePhrases.map((phrase, index) => 
+            new LoveText(phrase, index, lovePhrases.length)
+        );
+        
         // 动画循环
-        function animate(currentTime) {
-            if (!lastTime) lastTime = currentTime;
-            const deltaTime = currentTime - lastTime;
-            lastTime = currentTime;
+        function animate() {
+            // 清除画布
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
             
-            // 更新FPS
-            frameCount++;
-            if (currentTime - lastFpsUpdate >= 1000) {
-                fps = Math.round(frameCount * 1000 / (currentTime - lastFpsUpdate));
-                fpsEl.textContent = fps;
-                frameCount = 0;
-                lastFpsUpdate = currentTime;
-            }
-            
-            // 只有页面可见时才绘制
-            if (document.visibilityState === 'visible') {
-                draw();
-            }
+            // 更新并绘制所有文字
+            texts.forEach(text => {
+                text.update();
+                text.draw();
+            });
             
             requestAnimationFrame(animate);
         }
-
+        
         // 启动动画
-        requestAnimationFrame(animate);
-
-        // 事件监听 - 鼠标移动
-        canvas.addEventListener('mousemove', (e) => {
-            const rect = canvas.getBoundingClientRect();
-            mouse = {
-                x: (e.clientX - rect.left),
-                y: (e.clientY - rect.top),
-                active: true
-            };
-            overlay.classList.add('hidden');
-        });
-
-        // 事件监听 - 触摸移动
-        canvas.addEventListener('touchmove', (e) => {
-            e.preventDefault();
-            const rect = canvas.getBoundingClientRect();
-            const touch = e.touches[0];
-            mouse = {
-                x: (touch.clientX - rect.left),
-                y: (touch.clientY - rect.top),
-                active: true
-            };
-            overlay.classList.add('hidden');
-        }, { passive: false });
-
-        // 事件监听 - 鼠标离开
-        canvas.addEventListener('mouseleave', () => {
-            mouse.active = false;
-        });
-
-        // 事件监听 - 触摸结束
-        canvas.addEventListener('touchend', () => {
-            mouse.active = false;
-        });
-
-        // 事件监听 - 点击切换方向
-        canvas.addEventListener('click', () => {
-            isMovingForward = !isMovingForward;
-            // 点击时添加粒子爆发效果
-            const centerX = canvas.width / (2 * window.devicePixelRatio);
-            const centerY = canvas.height / (2 * window.devicePixelRatio);
-            
-            for (let i = 0; i < 30; i++) {
-                const p = new Particle();
-                p.x = centerX;
-                p.y = centerY;
-                const angle = Math.random() * Math.PI * 2;
-                const speed = 1 + Math.random() * 2;
-                p.speedX = Math.cos(angle) * speed;
-                p.speedY = Math.sin(angle) * speed;
-                p.size = Math.random() * 3 + 1;
-                p.alpha = 0.8;
-                particles.push(p);
-                
-                // 定时移除临时粒子
-                setTimeout(() => {
-                    const idx = particles.indexOf(p);
-                    if (idx > -1) particles.splice(idx, 1);
-                }, 2000);
-            }
-        });
-
-        // 窗口大小变化时重置
-        window.addEventListener('resize', () => {
-            const dpr = window.devicePixelRatio || 1;
-            const oldRatio = textObjects.length > 0 
-                ? textObjects[0].currentIndex / circlePoints.length 
-                : 0;
-            
-            setupCanvas();
-            
-            // 重新生成圆形路径点并保持文字相对位置
-            const newCirclePoints = generateCirclePoints(1500);
-            textObjects.forEach(obj => {
-                obj.currentIndex = Math.floor(oldRatio * newCirclePoints.length);
-            });
-            
-            circlePoints = newCirclePoints;
-            
-            // 调整粒子数量
-            while (particles.length > particleCount) {
-                particles.pop();
-            }
-            while (particles.length < particleCount) {
-                particles.push(new Particle());
-            }
-        });
+        animate();
     </script>
 </body>
 </html>
